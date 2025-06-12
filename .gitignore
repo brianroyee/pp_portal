@@ -1,0 +1,56 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.so
+*.pyd
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Firebase Admin SDK keys
+firebase_config.json
+
+# Flask specific
+instance/
+*.db
+*.sqlite3
+
+# Logs
+*.log
+
+# OS generated
+.DS_Store
+Thumbs.db
+
+# IDEs / Editors
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Python egg & pip stuff
+*.egg-info/
+dist/
+build/
+.eggs/
+pip-log.txt
+
+# Jupyter notebooks (if any)
+.ipynb_checkpoints/
+
+# dotenv / secrets
+.env
+
+# Coverage / testing
+.coverage
+htmlcov/
+.tox/
+.noseids
+.pytest_cache/
+
+# MyPy & Pyre type checker
+.mypy_cache/
+.pyre/
