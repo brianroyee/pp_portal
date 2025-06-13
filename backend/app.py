@@ -35,7 +35,7 @@ def load_users():
     return e
 
 
-@app.route('/', methods=['GET', 'POST', 'OPTIONS'])
+@app.route('/login', methods=['GET', 'POST', 'OPTIONS'])
 def index():
     if request.method == 'OPTIONS':
         return '', 204
