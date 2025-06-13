@@ -7,6 +7,10 @@ import { v4 as uuidv4 } from "uuid";
 const router = express.Router();
 const upload = multer();
 
+function sanitizeEmailKey(email) {
+	return email.replace(/[@.]/g, "_");
+}
+
 router.post("/submit", upload.single("image"), async (req, res) => {
 	const { text } = req.body;
 	const image = req.file;
@@ -28,7 +32,7 @@ router.post("/submit", upload.single("image"), async (req, res) => {
 		imageUrl = data.publicUrl;
 	}
 
-	const emailKey = req.session.emailKey;
+	const emailKey = sanitizeEmailKey(req.body.email);
 	const submissionData = {
 		prompt: text,
 		image_url: imageUrl,
@@ -49,7 +53,7 @@ router.get("/submissions", async (req, res) => {
 		return res.status(401).json({ success: false, message: "Unauthorized" });
 	}
 
-	const emailKey = req.session.emailKey;
+	const emailKey = sanitizeEmailKey(req.body.email);
 	const snapshot = await db.ref(`otps/${emailKey}`).once("value");
 	const data = snapshot.val();
 

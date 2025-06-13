@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
 	Upload,
 	Send,
@@ -14,6 +14,12 @@ import axios from "axios";
 import { toast, Toaster } from "sonner";
 import Image from "next/image";
 
+interface User {
+	username: string;
+	email: string;
+	name: string;
+}
+
 export default function SubmissionPage() {
 	const [prompt, setPrompt] = useState("");
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -21,6 +27,14 @@ export default function SubmissionPage() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const flaskUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000";
+	const [user, setUser] = useState<User | null>(null);
+
+	useEffect(() => {
+		const storedUser = localStorage.getItem("user");
+		if (storedUser) {
+			setUser(JSON.parse(storedUser));
+		}
+	}, []);
 
 	const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
@@ -62,6 +76,7 @@ export default function SubmissionPage() {
 
 		// Here you would integrate with your Flask backend
 		const formData = new FormData();
+		formData.append("email", user?.email || "");
 		formData.append("text", prompt);
 		if (selectedFile) {
 			formData.append("image", selectedFile);
