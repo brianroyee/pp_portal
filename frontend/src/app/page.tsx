@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import { inter, poppins, urbanist } from "@/ui/fonts";
 
 interface Alert {
 	id: number;
@@ -147,7 +148,9 @@ const LoginPage = () => {
 	);
 
 	return (
-		<div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-indigo-500 via-purple-500 to-purple-700 font-serif px-5">
+		<div
+			className={`min-h-screen ${poppins.className} flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-indigo-500 via-purple-500 to-purple-700 font-serif px-5`}
+		>
 			<div className="absolute inset-0 bg-gradient-to-br from-green-200/30 via-blue-200/30 to-yellow-200/20 animate-gradient"></div>
 			<FloatingDecorations />
 
@@ -156,8 +159,10 @@ const LoginPage = () => {
 					<div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-400 rounded-full mx-auto mb-4 flex items-center justify-center animate-pulse">
 						<span className="text-xl">🌿</span>
 					</div>
-					<p className="text-green-600 italic">Techiepedia</p>
-					<h1 className="text-3xl font-bold text-green-800 mb-2">
+					<p className="text-green-600 ">Techiepedia</p>
+					<h1
+						className={`text-3xl ${urbanist.className} font-bold text-green-800 mb-2`}
+					>
 						Prompted Pastures
 					</h1>
 				</div>
@@ -204,7 +209,7 @@ const LoginPage = () => {
 					<button
 						onClick={handleLogin}
 						disabled={isLoading}
-						className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-xl text-lg font-bold transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-green-200 focus:outline-none focus:ring-4 focus:ring-green-200 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden cursor-pointer"
+						className="w-full bg-gradient-to-r from-green-700 to-green-800 text-white p-4 rounded-xl text-lg font-bold transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-green-200 focus:outline-none focus:ring-4 focus:ring-green-200 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden cursor-pointer"
 					>
 						{isLoading ? (
 							<span className="flex items-center justify-center">

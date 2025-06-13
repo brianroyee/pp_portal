@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask_cors import CORS
 import firebase_admin
 from firebase_admin import credentials, db
 from datetime import datetime
@@ -14,6 +15,8 @@ SUPABASE_KEY = os.getenv('SUPABASE_KEY')
 
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 app = Flask(__name__)
+#CORS(app,origins=["http://localhost:3000", "http://127.0.0.1:3000",os.getenv("CORS_ORIGIN")])
+CORS(app)
 app.secret_key = os.getenv("SECRET_KEY")
 
 # Firebase setup
@@ -32,8 +35,10 @@ def load_users():
     return e
 
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['GET', 'POST', 'OPTIONS'])
 def index():
+    if request.method == 'OPTIONS':
+        return '', 204
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
