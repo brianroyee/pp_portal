@@ -9,6 +9,7 @@ import {
 	Mountain,
 	Sparkles,
 } from "lucide-react";
+import FloatingParticles from "@/components/FloatingParticles";
 import axios from "axios";
 import { toast, Toaster } from "sonner";
 import Image from "next/image";
@@ -113,20 +114,7 @@ export default function SubmissionPage() {
 					</div>
 
 					{/* Floating particles */}
-					{[...Array(6)].map((_, i) => (
-						<div
-							key={i}
-							className="absolute w-2 h-2 bg-green-300 rounded-full opacity-30"
-							style={{
-								left: `${Math.random() * 100}%`,
-								top: `${Math.random() * 100}%`,
-								animation: `float ${
-									3 + Math.random() * 2
-								}s ease-in-out infinite`,
-								animationDelay: `${Math.random() * 2}s`,
-							}}
-						/>
-					))}
+					<FloatingParticles />
 				</div>
 
 				<div className="relative z-10 container mx-auto px-4 py-8">
