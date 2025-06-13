@@ -292,7 +292,7 @@ export default function SubmissionPage() {
 					</div>
 				</div>
 			</div>
-			<Toaster />
+			<Toaster richColors />
 		</>
 	);
 }
