@@ -9,6 +9,8 @@ import {
 	Mountain,
 	Sparkles,
 } from "lucide-react";
+import axios from "axios";
+import { toast } from "sonner";
 
 export default function SubmissionPage() {
 	const [prompt, setPrompt] = useState("");
@@ -16,6 +18,7 @@ export default function SubmissionPage() {
 	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	const flaskUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000";
 
 	const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
@@ -55,9 +58,6 @@ export default function SubmissionPage() {
 		event.preventDefault();
 		setIsSubmitting(true);
 
-		// Simulate API call
-		await new Promise((resolve) => setTimeout(resolve, 2000));
-
 		// Here you would integrate with your Flask backend
 		const formData = new FormData();
 		formData.append("text", prompt);
@@ -65,13 +65,29 @@ export default function SubmissionPage() {
 			formData.append("image", selectedFile);
 		}
 
+		try {
+			const response = await axios.post(`${flaskUrl}/submit`, formData, {
+				headers: {
+					"Content-Type": "multipart/form-data",
+				},
+			});
+			if (response.status !== 200) {
+				throw new Error("Submission failed");
+			}
+		} catch (error) {
+			console.error("Submission failed:", error);
+			toast.error("Submission failed. Please try again.");
+			setIsSubmitting(false);
+			return;
+		}
+
 		// Reset form after successful submission
 		setPrompt("");
 		removeImage();
 		setIsSubmitting(false);
+		toast.success("Submission successful!");
 
 		// You can add success notification here
-		alert("Submission successful!");
 	};
 
 	return (
@@ -118,7 +134,7 @@ export default function SubmissionPage() {
 						</div>
 					</div>
 					<h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent mb-2">
-						Nature's Canvas
+						Prompted Pastures
 					</h1>
 					<p className="text-green-700 text-lg opacity-80">
 						Share your creative prompts and images with the natural world
@@ -264,7 +280,7 @@ export default function SubmissionPage() {
 								) : (
 									<>
 										<Send className="mr-3 h-6 w-6" />
-										Submit to Nature's Gallery
+										Submit
 									</>
 								)}
 							</button>
@@ -272,18 +288,6 @@ export default function SubmissionPage() {
 					</form>
 				</div>
 			</div>
-
-			<style jsx>{`
-				@keyframes float {
-					0%,
-					100% {
-						transform: translateY(0px);
-					}
-					50% {
-						transform: translateY(-20px);
-					}
-				}
-			`}</style>
 		</div>
 	);
 }

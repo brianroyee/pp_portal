@@ -79,7 +79,7 @@ const LoginPage = () => {
 				showAlert("Login successful! Redirecting...", "success");
 
 				setTimeout(() => {
-					router.push("/dashboard");
+					router.push("/submissions");
 				}, 1500);
 			} else {
 				const userExists = mockUsers.find(
