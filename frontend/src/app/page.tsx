@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
-import { inter, poppins, urbanist } from "@/ui/fonts";
+import { poppins, urbanist } from "@/ui/fonts";
 
 interface Alert {
 	id: number;

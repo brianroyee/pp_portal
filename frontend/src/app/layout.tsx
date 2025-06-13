@@ -5,6 +5,9 @@ import { poppins } from "@/ui/fonts";
 export const metadata: Metadata = {
 	title: "Prompted Pastures",
 	description: "Connect with Nature & Technology",
+	icons: {
+		icon: "leaf.svg",
+	},
 };
 
 export default function RootLayout({
