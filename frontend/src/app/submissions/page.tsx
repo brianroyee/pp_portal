@@ -67,6 +67,15 @@ export default function SubmissionPage() {
 			formData.append("image", selectedFile);
 		}
 
+		if (!prompt && !selectedFile) {
+			toast.error("Please enter a prompt or upload an image.");
+			setIsSubmitting(false);
+			return;
+		}
+
+		// Simulate API call delay
+		await new Promise((resolve) => setTimeout(resolve, 1000));
+
 		try {
 			const response = await axios.post(`${flaskUrl}/submit`, formData, {
 				headers: {
