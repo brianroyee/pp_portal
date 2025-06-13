@@ -23,6 +23,7 @@ const LoginPage = () => {
 	const [alerts, setAlerts] = useState<Alert[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const router = useRouter();
+	const flaskUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000";
 
 	// Mock user data for demonstration
 	const mockUsers: User[] = [
@@ -69,10 +70,7 @@ const LoginPage = () => {
 		await new Promise((resolve) => setTimeout(resolve, 1000));
 
 		try {
-			const response = await axios.post(
-				"http://127.0.0.1:5000/login",
-				formData
-			);
+			const response = await axios.post(`${flaskUrl}/login`, formData);
 			if (response) {
 				// Store user data in localStorage or context
 				localStorage.setItem("user", JSON.stringify(response));
