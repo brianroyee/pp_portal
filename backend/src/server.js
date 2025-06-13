@@ -4,7 +4,6 @@ import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth.js";
 import submitRoutes from "./routes/submit.js";
-import session from "express-session";
 import connectRedis from "connect-redis";
 import { createClient } from "ioredis";
 
