@@ -32,6 +32,27 @@
         <h2>Welcome, {{ name }}!</h2>
         <div class="info"><strong>Username:</strong> {{ username }}</div>
         <div class="info"><strong>Email:</strong>{{ email }}</div>
+<form action="{{ url_for('submit') }}" method="post" enctype="multipart/form-data">
+    <label for="text">Enter your prompt:</label><br>
+    <textarea name="text" rows="4" cols="40" required></textarea><br><br>
+
+    <label for="image">Upload Image:</label><br>
+    <input type="file" name="image" accept="image/*" required><br><br>
+
+    <button type="submit">Submit</button>
+</form>
+{% if prompt or image_url %}
+    <h3>Your Submission:</h3>
+    {% if prompt %}
+        <p><strong>Prompt:</strong> {{ prompt }}</p>
+    {% endif %}
+    {% if image_url %}
+        <p><strong>Image:</strong><br><img src="{{ image_url }}" width="300"></p>
+    {% endif %}
+{% endif %}
+
+
     </div>
+
 </body>
 </html>
