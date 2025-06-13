@@ -54,5 +54,3 @@ htmlcov/
 # MyPy & Pyre type checker
 .mypy_cache/
 .pyre/
-
-/frontend
