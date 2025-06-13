@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
+import { poppins, urbanist } from "@/ui/fonts";
 
 interface Alert {
 	id: number;
@@ -21,6 +23,7 @@ const LoginPage = () => {
 	const [alerts, setAlerts] = useState<Alert[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const router = useRouter();
+	const flaskUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000";
 
 	// Mock user data for demonstration
 	const mockUsers: User[] = [
@@ -44,7 +47,10 @@ const LoginPage = () => {
 		},
 	];
 
-	const showAlert = (message: string, type: "success" | "danger" = "success") => {
+	const showAlert = (
+		message: string,
+		type: "success" | "danger" = "success"
+	) => {
 		const newAlert: Alert = { id: Date.now(), message, type };
 		setAlerts((prev) => [...prev, newAlert]);
 		setTimeout(() => {
@@ -63,34 +69,35 @@ const LoginPage = () => {
 		// Simulate API call delay
 		await new Promise((resolve) => setTimeout(resolve, 1000));
 
-		const foundUser = mockUsers.find(
-			(user) =>
-				user.username === formData.username &&
-				user.password === formData.password
-		);
+		try {
+			const response = await axios.post(`${flaskUrl}/login`, formData);
+			if (response) {
+				// Store user data in localStorage or context
+				localStorage.setItem("user", JSON.stringify(response));
+				showAlert("Login successful! Redirecting...", "success");
 
-		if (foundUser) {
-			// Store user data in localStorage or context
-			localStorage.setItem("user", JSON.stringify(foundUser));
-			showAlert("Login successful! Redirecting...", "success");
-
-			setTimeout(() => {
-				router.push("/dashboard");
-			}, 1500);
-		} else {
-			const userExists = mockUsers.find(
-				(user) => user.username === formData.username
-			);
-			if (userExists) {
-				showAlert("Incorrect password. Please try again.", "danger");
+				setTimeout(() => {
+					router.push("/submissions");
+				}, 1500);
 			} else {
-				showAlert(
-					"Username not found. Please check your credentials.",
-					"danger"
+				const userExists = mockUsers.find(
+					(user) => user.username === formData.username
 				);
+				if (userExists) {
+					showAlert("Incorrect password. Please try again.", "danger");
+				} else {
+					showAlert(
+						"Username not found. Please check your credentials.",
+						"danger"
+					);
+				}
 			}
+			setIsLoading(false);
+		} catch {
+			showAlert("Login failed. Please try again.", "danger");
+			setIsLoading(false);
+			return;
 		}
-		setIsLoading(false);
 	};
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,7 +123,7 @@ const LoginPage = () => {
 					style={{
 						left: `${10 + index * 30}%`,
 						animationDelay: `${index * 5}s`,
-						animationDuration: "15s",
+						animationDuration: "20s",
 					}}
 				>
 					{emoji}
@@ -139,7 +146,9 @@ const LoginPage = () => {
 	);
 
 	return (
-		<div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-indigo-500 via-purple-500 to-purple-700 font-serif">
+		<div
+			className={`min-h-screen ${poppins.className} flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-indigo-500 via-purple-500 to-purple-700 font-serif px-5`}
+		>
 			<div className="absolute inset-0 bg-gradient-to-br from-green-200/30 via-blue-200/30 to-yellow-200/20 animate-gradient"></div>
 			<FloatingDecorations />
 
@@ -148,12 +157,12 @@ const LoginPage = () => {
 					<div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-400 rounded-full mx-auto mb-4 flex items-center justify-center animate-pulse">
 						<span className="text-xl">🌿</span>
 					</div>
-					<h1 className="text-3xl font-bold text-green-800 mb-2">
-						TechiePedia
+					<p className="text-green-600 ">Techiepedia</p>
+					<h1
+						className={`text-3xl ${urbanist.className} font-bold text-green-800 mb-2`}
+					>
+						Prompted Pastures
 					</h1>
-					<p className="text-green-600 italic">
-						Connect with Nature & Technology
-					</p>
 				</div>
 
 				{alerts.length > 0 && (
@@ -175,7 +184,7 @@ const LoginPage = () => {
 							value={formData.username}
 							onChange={handleInputChange}
 							onKeyDown={handleKeyDown}
-							className="w-full p-4 border-2 border-gray-200 rounded-xl text-base transition-all duration-300 bg-white/80 focus:border-green-500 focus:outline-none focus:ring-4 focus:ring-green-100 focus:bg-white hover:border-green-300"
+							className="w-full p-4 border-2 border-gray-200 rounded-xl h-15 text-black transition-all duration-300 bg-white/80 focus:border-green-500 focus:outline-none focus:ring-4 focus:ring-green-100 focus:bg-white hover:border-green-300"
 							placeholder="Enter your username"
 						/>
 					</div>
@@ -190,7 +199,7 @@ const LoginPage = () => {
 							value={formData.password}
 							onChange={handleInputChange}
 							onKeyDown={handleKeyDown}
-							className="w-full p-4 border-2 border-gray-200 rounded-xl text-base transition-all duration-300 bg-white/80 focus:border-green-500 focus:outline-none focus:ring-4 focus:ring-green-100 focus:bg-white hover:border-green-300"
+							className="w-full p-4 border-2 border-gray-200 rounded-xl text-base text-black transition-all duration-300 bg-white/80 focus:border-green-500 focus:outline-none focus:ring-4 focus:ring-green-100 focus:bg-white hover:border-green-300"
 							placeholder="Enter your password"
 						/>
 					</div>
@@ -198,7 +207,7 @@ const LoginPage = () => {
 					<button
 						onClick={handleLogin}
 						disabled={isLoading}
-						className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white p-4 rounded-xl text-lg font-bold transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-green-200 focus:outline-none focus:ring-4 focus:ring-green-200 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden"
+						className="w-full bg-gradient-to-r from-green-700 to-green-800 text-white p-4 rounded-xl text-lg font-bold transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-green-200 focus:outline-none focus:ring-4 focus:ring-green-200 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden cursor-pointer"
 					>
 						{isLoading ? (
 							<span className="flex items-center justify-center">
@@ -210,81 +219,7 @@ const LoginPage = () => {
 						)}
 					</button>
 				</div>
-
-				<div className="mt-6 p-4 bg-green-50 rounded-xl border-l-4 border-green-400">
-					<p className="text-sm text-green-700 font-medium">
-						Demo Credentials:
-					</p>
-					<p className="text-xs text-green-600 mt-1">
-						Username: demo | Password: demo
-					</p>
-					<p className="text-xs text-green-600">
-						Username: john_doe | Password: nature123
-					</p>
-				</div>
 			</div>
-
-			<style jsx>{`
-				@keyframes float {
-					0% {
-						transform: translateY(100vh) rotate(0deg);
-					}
-					100% {
-						transform: translateY(-100px) rotate(360deg);
-					}
-				}
-
-				@keyframes gradient {
-					0%,
-					100% {
-						transform: translateY(0px) rotate(0deg);
-					}
-					33% {
-						transform: translateY(-20px) rotate(1deg);
-					}
-					66% {
-						transform: translateY(10px) rotate(-1deg);
-					}
-				}
-
-				@keyframes slide-up {
-					from {
-						opacity: 0;
-						transform: translateY(30px);
-					}
-					to {
-						opacity: 1;
-						transform: translateY(0);
-					}
-				}
-
-				@keyframes slide-down {
-					from {
-						opacity: 0;
-						transform: translateY(-10px);
-					}
-					to {
-						opacity: 1;
-						transform: translateY(0);
-					}
-				}
-
-				.animate-float {
-					animation: float 15s linear infinite;
-				}
-
-				.animate-gradient {
-					animation: gradient 20s ease-in-out infinite;
-				}
-
-				.animate-slide-up {
-					animation: slide-up 0.8s ease-out;
-				}
-
-				.animate-slide-down {
-					animation: slide-down 0.5s ease-out;
-				}
-			`}</style>
 		</div>
 	);
 };
