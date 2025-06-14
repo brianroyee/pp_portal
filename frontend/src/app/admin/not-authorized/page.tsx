@@ -8,13 +8,12 @@ import {
 	TreePine,
 	Mountain,
 	Leaf,
-	Eye,
 	EyeOff,
 	Home,
 	AlertTriangle,
-	ArrowLeft,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import FloatingParticles from "@/components/FloatingParticles";
 
 export default function NotAuthorizedPage() {
 	const router = useRouter();
@@ -29,10 +28,6 @@ export default function NotAuthorizedPage() {
 
 	const handleGoHome = () => {
 		router.push("/");
-	};
-
-	const handleGoBack = () => {
-		router.back();
 	};
 
 	return (
@@ -78,18 +73,7 @@ export default function NotAuthorizedPage() {
 				))}
 
 				{/* Floating particles */}
-				{[...Array(12)].map((_, i) => (
-					<div
-						key={i}
-						className="absolute w-2 h-2 bg-red-300 rounded-full opacity-30"
-						style={{
-							left: `${Math.random() * 100}%`,
-							top: `${Math.random() * 100}%`,
-							animation: `float ${4 + Math.random() * 3}s ease-in-out infinite`,
-							animationDelay: `${Math.random() * 3}s`,
-						}}
-					/>
-				))}
+				<FloatingParticles count={12} color="red" />
 			</div>
 
 			<div className="relative z-10 max-w-2xl mx-auto px-6 text-center">
@@ -135,8 +119,8 @@ export default function NotAuthorizedPage() {
 								🌲 This sacred grove is protected 🌲
 							</p>
 							<p className="text-red-700 leading-relaxed">
-								You don't have permission to enter this area of Prompted
-								Pastures' Admin Panel. Only authorized forest guardians can
+								You don&apos;t have permission to enter this area of Prompted
+								Pastures&apos; Admin Panel. Only authorized forest guardians can
 								access these ancient secrets.
 							</p>
 						</div>
@@ -175,7 +159,7 @@ export default function NotAuthorizedPage() {
 						<div className="flex items-center justify-center space-x-4 text-red-400">
 							<TreePine className="w-6 h-6" />
 							<span className="text-sm font-medium">
-								Protected by Nature's Guardian
+								Protected by Nature&apos;s Guardian
 							</span>
 							<Leaf className="w-6 h-6" />
 						</div>
