@@ -88,6 +88,12 @@ export default function SubmissionPage() {
 			return;
 		}
 
+		if (getWordCount(prompt) > 200) {
+			toast.error("Prompt must be less than 200 words.");
+			setIsSubmitting(false);
+			return;
+		}
+
 		// Simulate API call delay
 		await new Promise((resolve) => setTimeout(resolve, 1000));
 
@@ -112,8 +118,10 @@ export default function SubmissionPage() {
 		removeImage();
 		setIsSubmitting(false);
 		toast.success("Submission successful!");
+	};
 
-		// You can add success notification here
+	const getWordCount = (text: string) => {
+		return text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
 	};
 
 	return (
@@ -180,8 +188,14 @@ export default function SubmissionPage() {
 										className="w-full p-6 border-2 border-green-200 rounded-2xl focus:border-green-400 focus:ring-4 focus:ring-green-100 transition-all duration-300 bg-gradient-to-br from-white to-green-50/30 text-green-900 placeholder-green-400 resize-none text-lg"
 										required
 									/>
-									<div className="absolute bottom-4 right-4 text-sm text-green-500 font-medium">
-										{prompt.length} characters
+									<div
+										className={`absolute bottom-4 right-4 text-sm font-medium ${
+											getWordCount(prompt) > 200
+												? "text-red-600"
+												: "text-green-600"
+										}`}
+									>
+										{getWordCount(prompt)} words
 									</div>
 								</div>
 							</div>
