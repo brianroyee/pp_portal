@@ -133,3 +133,53 @@ export const changeStatus = async (req, res) => {
     });
   }
 };
+
+export const advanceToNextRound = async (req, res) => {
+  try {
+    // Get all submissions
+    const submissionsSnapshot = await db.ref("otps").once("value");
+    const submissionsData = submissionsSnapshot.val();
+    
+    if (!submissionsData) {
+      return res.status(404).json({
+        success: false,
+        message: "No submissions found"
+      });
+    }
+    
+    // Process each submission
+    const updates = {};
+    
+    Object.entries(submissionsData).forEach(([key, userData]) => {
+      // Skip entries without status (like admin users)
+      if (!userData.status) return;
+      
+      // Change selected to pending for next round
+      if (userData.status === "selected") {
+        updates[`otps/${key}/status`] = "pending";
+      }
+      
+      // Change rejected to rejected_final
+      if (userData.status === "rejected") {
+        updates[`otps/${key}/status`] = "rejected_final";
+      }
+    });
+    
+    // Apply all updates in a single operation
+    if (Object.keys(updates).length > 0) {
+      await db.ref().update(updates);
+    }
+    
+    res.status(200).json({
+      success: true,
+      message: "Advanced to next round successfully",
+      updatedCount: Object.keys(updates).length
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to advance to next round",
+      error: error.message
+    });
+  }
+};

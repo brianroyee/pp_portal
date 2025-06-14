@@ -14,6 +14,7 @@ import {
 	Search,
 	Clock,
 	Image as ImageIcon,
+	Ban,
 } from "lucide-react";
 import axios from "axios";
 import { toast, Toaster } from "sonner";
@@ -37,6 +38,9 @@ export default function AdminDashboard() {
 	);
 	const rejectedSubmissions = submissions.filter(
 		(s) => s.status === "rejected"
+	);
+	const rejectedFinalSubmissions = submissions.filter(
+		(s) => s.status === "rejected_final"
 	);
 
 	const loadSubmissions = async () => {
@@ -79,7 +83,7 @@ export default function AdminDashboard() {
 
 	const handleStatusChange = async (
 		email: string,
-		newStatus: "selected" | "rejected" | "pending"
+		newStatus: "selected" | "rejected" | "rejected_final" | "pending"
 	) => {
 		try {
 			// Update UI immediately for better UX
@@ -101,6 +105,8 @@ export default function AdminDashboard() {
 						? "accepted"
 						: newStatus === "rejected"
 						? "rejected"
+						: newStatus === "rejected_final"
+						? "permanently rejected"
 						: "pending"
 				}`
 			);
@@ -135,6 +141,26 @@ export default function AdminDashboard() {
 		} catch {
 			console.error("Error toggling submissions");
 			toast.error("Error toggling submissions");
+		}
+	};
+	
+	const handleAdvanceRound = async () => {
+		try {
+			// Show confirmation dialog
+			if (!confirm("Are you sure you want to advance to the next round? This will:\n\n- Move all selected submissions to pending\n- Move all rejected submissions to permanently rejected")) {
+				return;
+			}
+			
+			// Call the API to advance to the next round
+			const response = await axios.post("/api/advanceRound");
+			
+			// Reload submissions to reflect the changes
+			await loadSubmissions();
+			
+			toast.success(`Advanced to next round! ${response.data.updatedCount} submissions updated.`);
+		} catch (error) {
+			console.error("Error advancing to next round:", error);
+			toast.error("Failed to advance to next round");
 		}
 	};
 
@@ -266,6 +292,28 @@ export default function AdminDashboard() {
 									>
 										<Check className="w-4 h-4" />
 									</button>
+									<button
+										onClick={() =>
+											handleStatusChange(submission.email, "rejected_final")
+										}
+										className="p-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors duration-200 shadow-sm"
+										title="Permanently Reject"
+									>
+										<Ban className="w-4 h-4" />
+									</button>
+								</>
+							)}
+							{submission.status === "rejected_final" && (
+								<>
+									<button
+										onClick={() =>
+											handleStatusChange(submission.email, "pending")
+										}
+										className="p-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors duration-200 shadow-sm"
+										title="Mark as Pending"
+									>
+										<Clock className="w-4 h-4" />
+									</button>
 								</>
 							)}
 						</div>
@@ -341,6 +389,14 @@ export default function AdminDashboard() {
 											{submissionsOpen ? "Open" : "Closed"}
 										</span>
 									</button>
+									<button
+										onClick={handleAdvanceRound}
+										className="flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-300 bg-blue-500 text-white shadow-lg"
+										title="Move to next round"
+									>
+										<Clock className="w-4 h-4" />
+										<span className="font-medium">Next Round</span>
+									</button>
 								</div>
 							</div>
 						</div>
@@ -348,7 +404,7 @@ export default function AdminDashboard() {
 				</div>
 
 				{/* Stats Cards */}
-				<div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+				<div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
 					<div
 						key="total"
 						className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100"
@@ -363,6 +419,36 @@ export default function AdminDashboard() {
 								</p>
 							</div>
 							<FileText className="w-8 h-8 text-green-500" />
+						</div>
+					</div>
+
+					<div
+						key="rejected_final"
+						className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100"
+					>
+						<div className="flex items-center justify-between">
+							<div>
+								<p className="text-purple-600 text-sm font-medium">Permanently Rejected</p>
+								<p className="text-2xl font-bold text-purple-800">
+									{rejectedFinalSubmissions.length}
+								</p>
+							</div>
+							<Ban className="w-8 h-8 text-purple-500" />
+						</div>
+					</div>
+
+					<div
+						key="rejected"
+						className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100"
+					>
+						<div className="flex items-center justify-between">
+							<div>
+								<p className="text-red-600 text-sm font-medium">Rejected</p>
+								<p className="text-2xl font-bold text-red-800">
+									{rejectedSubmissions.length}
+								</p>
+							</div>
+							<X className="w-8 h-8 text-red-500" />
 						</div>
 					</div>
 
@@ -397,21 +483,6 @@ export default function AdminDashboard() {
 							<Check className="w-8 h-8 text-green-500" />
 						</div>
 					</div>
-
-					<div
-						key="rejected"
-						className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100"
-					>
-						<div className="flex items-center justify-between">
-							<div>
-								<p className="text-red-600 text-sm font-medium">Rejected</p>
-								<p className="text-2xl font-bold text-red-800">
-									{rejectedSubmissions.length}
-								</p>
-							</div>
-							<X className="w-8 h-8 text-red-500" />
-						</div>
-					</div>
 				</div>
 
 				{/* Search Bar */}
@@ -430,8 +501,40 @@ export default function AdminDashboard() {
 					</div>
 				</div>
 
-				{/* Three Column Layout */}
-				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+				{/* Four Column Layout */}
+				<div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+					{/* Permanently Rejected Column */}
+					<div className="space-y-6">
+						<div className="bg-purple-100/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-purple-200">
+							<div className="flex items-center space-x-3">
+								<div className="p-2 bg-purple-500 rounded-lg">
+									<Ban className="w-5 h-5 text-white" />
+								</div>
+								<div>
+									<h2 className="text-xl font-bold text-purple-800">Permanently Rejected</h2>
+									<p className="text-purple-600 text-sm">
+										{filteredSubmissions("rejected_final").length} submissions
+									</p>
+								</div>
+							</div>
+						</div>
+
+						<div className="space-y-4 max-h-[600px] overflow-y-auto">
+							{filteredSubmissions("rejected_final").map((submission) => (
+								<SubmissionCard
+									key={submission.email}
+									submission={submission}
+								/>
+							))}
+							{filteredSubmissions("rejected_final").length === 0 && (
+								<div className="text-center py-8 text-purple-400">
+									<Ban className="w-12 h-12 mx-auto mb-4 opacity-50" />
+									<p>No permanently rejected submissions</p>
+								</div>
+							)}
+						</div>
+					</div>
+					
 					{/* Rejected Column */}
 					<div className="space-y-6">
 						<div className="bg-red-100/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-red-200">
