@@ -12,7 +12,7 @@ interface SubmissionModalProps {
 	onClose: () => void;
 	onStatusChange: (
 		email: string,
-		status: "selected" | "rejected" | "pending"
+		status: "selected" | "rejected" | "rejected_final" | "pending"
 	) => void;
 }
 
@@ -41,7 +41,7 @@ export default function SubmissionModal({
 	};
 
 	const handleStatusChange = async (
-		status: "selected" | "rejected" | "pending"
+		status: "selected" | "rejected" | "rejected_final" | "pending"
 	) => {
 		setIsUpdating(true);
 		try {

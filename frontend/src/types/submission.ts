@@ -6,5 +6,5 @@ export interface Submission {
   prompt: string;
   image_url?: string;
   submitted_at: string;
-  status: "pending" | "selected" | "rejected";
+  status: "pending" | "selected" | "rejected" | "rejected_final";
 }
