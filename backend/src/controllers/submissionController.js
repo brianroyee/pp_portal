@@ -94,3 +94,42 @@ export const getSubmissions = async (req, res) => {
 		});
 	}
 };
+
+export const changeStatus = async (req, res) => {
+  const { email, status } = req.body;
+  
+  if (!email || !status) {
+    return res.status(400).json({
+      success: false,
+      message: "Email and status are required"
+    });
+  }
+  
+  try {
+    const emailKey = sanitizeEmailKey(email);
+    const snapshot = await db.ref(`otps/${emailKey}`).once("value");
+    const userData = snapshot.val();
+    
+    if (!userData) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+    
+    // Update the status
+    await db.ref(`otps/${emailKey}`).update({ status });
+    
+    res.status(200).json({
+      success: true,
+      message: "Status updated successfully",
+      status
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to update status",
+      error: error.message
+    });
+  }
+};
