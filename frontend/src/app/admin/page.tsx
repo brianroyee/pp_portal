@@ -16,6 +16,7 @@ import {
 	Image as ImageIcon,
 	Ban,
 	ArrowRight,
+	LogOut,
 } from "lucide-react";
 import {
 	AlertDialog,
@@ -43,6 +44,11 @@ export default function AdminDashboard() {
 	const [selectedSubmission, setSelectedSubmission] =
 		useState<Submission | null>(null);
 	const router = useRouter();
+
+	const handleLogout = () => {
+		localStorage.removeItem("user");
+		router.push("/");
+	};
 
 	const pendingSubmissions = submissions.filter((s) => s.status === "pending");
 	const selectedSubmissions = submissions.filter(
@@ -155,16 +161,18 @@ export default function AdminDashboard() {
 			toast.error("Error toggling submissions");
 		}
 	};
-	
+
 	const handleAdvanceRound = async () => {
 		try {
 			// Call the API to advance to the next round
 			const response = await axios.post("/api/advanceRound");
-			
+
 			// Reload submissions to reflect the changes
 			await loadSubmissions();
-			
-			toast.success(`Advanced to next round! ${response.data.updatedCount} submissions updated.`);
+
+			toast.success(
+				`Advanced to next round! ${response.data.updatedCount} submissions updated.`
+			);
 		} catch (error) {
 			console.error("Error advancing to next round:", error);
 			toast.error("Failed to advance to next round");
@@ -354,9 +362,6 @@ export default function AdminDashboard() {
 						<div className="flex items-center space-x-4">
 							<div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-green-100">
 								<div className="flex items-center space-x-3">
-									<span className="text-green-800 font-medium">
-										Submissions:
-									</span>
 									<button
 										onClick={() => handleToggleSubmissions()}
 										className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-300 ${
@@ -381,6 +386,13 @@ export default function AdminDashboard() {
 												<span>Next Round</span>
 											</button>
 										</AlertDialogTrigger>
+										<button
+											onClick={handleLogout}
+											className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+										>
+											<LogOut className="w-4 h-4" />
+											<span>Logout</span>
+										</button>
 										<AlertDialogContent>
 											<AlertDialogHeader>
 												<AlertDialogTitle>
