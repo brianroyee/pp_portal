@@ -19,6 +19,8 @@ import {
 	Clock,
 	Image as ImageIcon,
 } from "lucide-react";
+import axios from "axios";
+import { toast } from "sonner";
 
 interface Submission {
 	id: string;
@@ -32,55 +34,40 @@ interface Submission {
 }
 
 export default function AdminDashboard() {
-	const [submissions, setSubmissions] = useState<Submission[]>([
-		{
-			id: "1",
-			username: "nature_lover",
-			email: "lover@nature.com",
-			name: "John Doe",
-			prompt:
-				"A serene mountain landscape with crystal clear lakes reflecting the snow-capped peaks, surrounded by ancient pine forests.",
-			image_url:
-				"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400",
-			submitted_at: "2025-06-14T10:30:00Z",
-			status: "pending",
-		},
-		{
-			id: "2",
-			username: "forest_walker",
-			email: "walker@forest.com",
-			name: "Jane Smith",
-			prompt:
-				"Sunlight filtering through dense forest canopy, creating magical beams of light that illuminate the forest floor.",
-			image_url:
-				"https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400",
-			submitted_at: "2025-06-14T09:15:00Z",
-			status: "selected",
-		},
-		{
-			id: "3",
-			username: "ocean_dreamer",
-			email: "dreamer@ocean.com",
-			name: "Mike Johnson",
-			prompt:
-				"Peaceful ocean waves gently touching a pristine beach with palm trees swaying in the tropical breeze.",
-			submitted_at: "2025-06-14T08:45:00Z",
-			status: "rejected",
-		},
-	]);
-
+	const [submissions, setSubmissions] = useState<Submission[]>([]);
 	const [submissionsOpen, setSubmissionsOpen] = useState(true);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [selectedSubmission, setSelectedSubmission] =
 		useState<Submission | null>(null);
 
-	const pendingSubmissions = submissions.filter((s) => s.status === "pending");
+	const pendingSubmissions = submissions;
 	const selectedSubmissions = submissions.filter(
 		(s) => s.status === "selected"
 	);
 	const rejectedSubmissions = submissions.filter(
 		(s) => s.status === "rejected"
 	);
+
+	const loadSubmissions = async () => {
+		try {
+			const user = JSON.parse(localStorage.getItem("user") || "{}");
+			const email = user?.email;
+			const response = await axios.get(
+				`${process.env.NEXT_PUBLIC_API_URL}/submissions`,
+				{
+					params: { email },
+				}
+			);
+			setSubmissions(response.data.submissions);
+			console.table(response.data.submissions);
+		} catch (error) {
+			console.error("Error fetching submissions:", error);
+		}
+	};
+
+	useEffect(() => {
+		loadSubmissions();
+	}, []);
 
 	const handleStatusChange = (
 		submissionId: string,
@@ -91,6 +78,21 @@ export default function AdminDashboard() {
 				sub.id === submissionId ? { ...sub, status: newStatus } : sub
 			)
 		);
+	};
+
+	const handleToggleSubmissions = () => {
+		setSubmissionsOpen(!submissionsOpen);
+		try {
+			const user = JSON.parse(localStorage.getItem("user") || "{}");
+			const email = user?.email;
+			axios.post(`${process.env.NEXT_PUBLIC_API_URL}/toggleSubmissions`, {
+				email,
+				status: !submissionsOpen,
+			});
+		} catch {
+			console.error("Error toggling submissions");
+			toast.error("Error toggling submissions");
+		}
 	};
 
 	const filteredSubmissions = (status: string) => {
@@ -239,7 +241,7 @@ export default function AdminDashboard() {
 										Submissions:
 									</span>
 									<button
-										onClick={() => setSubmissionsOpen(!submissionsOpen)}
+										onClick={() => handleToggleSubmissions()}
 										className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-300 ${
 											submissionsOpen
 												? "bg-green-500 text-white shadow-lg"

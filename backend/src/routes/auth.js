@@ -3,6 +3,10 @@ import { db } from "../config/firebase.js";
 
 const router = express.Router();
 
+function sanitizeEmailKey(email) {
+	return email.replace(/[@.]/g, "_");
+}
+
 router.post("/login", async (req, res) => {
 	const { username, password } = req.body;
 
@@ -41,5 +45,47 @@ router.post("/login", async (req, res) => {
 		},
 	});
 });
+
+// router.post("/toggleSubmissions", async (req, res) => {
+// 	const { email, status } = req.body;
+// 	const emailKey = sanitizeEmailKey(email);
+// 	const adminSnapshot = await db.ref(`otps/${emailKey}`).once("value");
+// 	const adminData = adminSnapshot.val();
+// 	console.log("adminData", adminData);
+
+// 	if (!adminData || adminData.role !== "admin") {
+// 		return res.status(403).json({ success: false, message: "Not Authorized" });
+// 	}
+
+// 	const snapshot = await db.ref("otps").once("value");
+// 	const data = snapshot.val();
+
+// 	if (!data) {
+// 		console.warn("No submissions found.");
+// 		return;
+// 	}
+
+// 	let formStatus = "";
+
+// 	if (status) {
+// 		console.log("Opening all submissions.");
+// 		formStatus = "opened";
+// 	} else {
+// 		console.log("Closing all submissions.");
+// 		formStatus = "closed";
+// 	}
+
+// 	const updates = {};
+// 	for (const emailKey in data) {
+// 		if (data[emailKey]) {
+// 			updates[`otps/${emailKey}/formStatus`] = formStatus;
+// 		}
+// 	}
+
+// 	await db.ref().update(updates);
+// 	console.log("All formStatus fields updated.");
+
+// 	res.status(200).json({ success: true, message: `Submission ${formStatus}` });
+// });
 
 export default router;

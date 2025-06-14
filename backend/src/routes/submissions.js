@@ -36,6 +36,7 @@ router.post("/submit", upload.single("image"), async (req, res) => {
 	const submissionData = {
 		prompt: text,
 		image_url: imageUrl,
+		status: "pending",
 		submitted_at: new Date().toISOString(),
 	};
 
@@ -49,20 +50,35 @@ router.post("/submit", upload.single("image"), async (req, res) => {
 });
 
 router.get("/submissions", async (req, res) => {
-	if (!req.body.email) {
+	const { email } = req.query;
+	if (!email) {
 		return res.status(404).json({ success: false, message: "Email not found" });
 	}
-	const emailKey = sanitizeEmailKey(req.body.email);
-	const snapshot = await db.ref(`otps/${emailKey}`).once("value");
-	const data = snapshot.val();
-	console.log(data);
 
-	if (data) {
-		return res.status(200).json({ success: true, data });
-	} else {
-		return res
-			.status(404)
-			.json({ success: false, message: "No submissions found" });
+	try {
+		const emailKey = sanitizeEmailKey(email);
+		const snapshot = await db.ref(`otps/${emailKey}`).once("value");
+		const data = snapshot.val();
+
+		if (!data || data.role !== "admin") {
+			return res
+				.status(403)
+				.json({ success: false, message: "Not Authorized" });
+		}
+
+		const submissionSnapshot = await db.ref("otps").once("value");
+		const submissionData = submissionSnapshot.val();
+
+		// Get only values that have prompt, image_url, and status
+		const filteredSubmissions = Object.values(submissionData || {}).filter(
+			(entry) => entry?.prompt?.trim() && entry?.image_url?.trim()
+		);
+
+		console.group("submissionData", filteredSubmissions);
+
+		res.status(200).json({ success: true, submissions: filteredSubmissions });
+	} catch {
+		return res.status(400).json({ success: false, message: "Bad Request" });
 	}
 });
 
