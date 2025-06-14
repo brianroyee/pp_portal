@@ -19,23 +19,17 @@ import axios from "axios";
 import { toast, Toaster } from "sonner";
 import Image from "next/image";
 import FloatingParticles from "@/components/FloatingParticles";
+import SubmissionModal from "@/components/SubmissionModal";
+import { Submission } from "@/types/submission";
 import { useRouter } from "next/navigation";
 
-interface Submission {
-	id: string;
-	username: string;
-	email: string;
-	name: string;
-	prompt: string;
-	image_url?: string;
-	submitted_at: string;
-	status: "pending" | "selected" | "rejected";
-}
+
 
 export default function AdminDashboard() {
 	const [submissions, setSubmissions] = useState<Submission[]>([]);
 	const [submissionsOpen, setSubmissionsOpen] = useState(true);
 	const [searchTerm, setSearchTerm] = useState("");
+	const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
 	const router = useRouter();
 
 	const pendingSubmissions = submissions.filter((s) => s.status === "pending");
@@ -143,7 +137,10 @@ export default function AdminDashboard() {
 		submission: Submission;
 		showActions?: boolean;
 	}) => (
-		<div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100 hover:shadow-xl transition-all duration-300 group">
+		<div 
+			className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100 hover:shadow-xl transition-all duration-300 group cursor-pointer"
+			onClick={() => setSelectedSubmission(submission)}
+		>
 			<div className="flex items-start space-x-4">
 				{submission.image_url ? (
 					<Image
@@ -180,7 +177,7 @@ export default function AdminDashboard() {
 						</div>
 
 						{showActions && (
-							<div className="flex space-x-2">
+							<div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
 								<button
 									onClick={() => handleStatusChange(submission.id, "selected")}
 									className="p-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors duration-200 shadow-sm"
@@ -410,7 +407,7 @@ export default function AdminDashboard() {
 						<div className="space-y-4 max-h-[600px] overflow-y-auto">
 							{filteredSubmissions("pending").map((submission) => (
 								<SubmissionCard
-									key={submission.email}
+									key={submission.id}
 									submission={submission}
 									showActions={true}
 								/>
@@ -455,6 +452,18 @@ export default function AdminDashboard() {
 				</div>
 			</div>
 
+			{/* Submission Modal */}
+			{selectedSubmission && (
+				<SubmissionModal
+					submission={selectedSubmission}
+					onClose={() => setSelectedSubmission(null)}
+					onStatusChange={(id, status) => {
+						handleStatusChange(id, status);
+						setSelectedSubmission(null);
+					}}
+				/>
+			)}
+
 			<style jsx>{`
 				@keyframes float {
 					0%,
@@ -473,7 +482,7 @@ export default function AdminDashboard() {
 					overflow: hidden;
 				}
 			`}</style>
-			<Toaster richColors />
+			<Toaster />
 		</div>
 	);
 }
