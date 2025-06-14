@@ -75,8 +75,6 @@ router.get("/submissions", async (req, res) => {
 			(entry) => entry?.prompt?.trim() && entry?.image_url?.trim()
 		);
 
-		console.group("submissionData", filteredSubmissions);
-
 		res.status(200).json({ success: true, submissions: filteredSubmissions });
 	} catch {
 		return res.status(400).json({ success: false, message: "Bad Request" });

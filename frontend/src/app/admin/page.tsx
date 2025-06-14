@@ -16,7 +16,7 @@ import {
 	Image as ImageIcon,
 } from "lucide-react";
 import axios from "axios";
-import { toast } from "sonner";
+import { toast, Toaster } from "sonner";
 import Image from "next/image";
 import FloatingParticles from "@/components/FloatingParticles";
 import { useRouter } from "next/navigation";
@@ -38,7 +38,7 @@ export default function AdminDashboard() {
 	const [searchTerm, setSearchTerm] = useState("");
 	const router = useRouter();
 
-	const pendingSubmissions = submissions;
+	const pendingSubmissions = submissions.filter((s) => s.status === "pending");
 	const selectedSubmissions = submissions.filter(
 		(s) => s.status === "selected"
 	);
@@ -57,7 +57,7 @@ export default function AdminDashboard() {
 				}
 			);
 			setSubmissions(response.data.submissions);
-			console.table(response.data.submissions);
+			console.log("Submissions loaded");
 		} catch (error) {
 			console.error("Error fetching submissions:", error);
 			router.push("/admin/not-authorized");
@@ -65,6 +65,11 @@ export default function AdminDashboard() {
 	};
 
 	useEffect(() => {
+		if (!localStorage.getItem("user")) {
+			router.push("/admin/not-authorized");
+			return;
+		}
+		console.log("Loading submissions...");
 		loadSubmissions();
 
 		// Set up interval to refresh submissions every minute
@@ -97,6 +102,12 @@ export default function AdminDashboard() {
 				email,
 				status: !submissionsOpen,
 			});
+			console.log("Submissions toggled");
+			if (!submissionsOpen) {
+				toast.success("Submissions open");
+			} else {
+				toast.success("Submissions closed");
+			}
 		} catch {
 			console.error("Error toggling submissions");
 			toast.error("Error toggling submissions");
@@ -460,6 +471,7 @@ export default function AdminDashboard() {
 					overflow: hidden;
 				}
 			`}</style>
+			<Toaster richColors />
 		</div>
 	);
 }
