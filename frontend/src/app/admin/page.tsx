@@ -15,7 +15,19 @@ import {
 	Clock,
 	Image as ImageIcon,
 	Ban,
+	ArrowRight,
 } from "lucide-react";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import axios from "axios";
 import { toast, Toaster } from "sonner";
 import Image from "next/image";
@@ -143,21 +155,18 @@ export default function AdminDashboard() {
 			toast.error("Error toggling submissions");
 		}
 	};
-	
+
 	const handleAdvanceRound = async () => {
 		try {
-			// Show confirmation dialog
-			if (!confirm("Are you sure you want to advance to the next round? This will:\n\n- Move all selected submissions to pending\n- Move all rejected submissions to permanently rejected")) {
-				return;
-			}
-			
 			// Call the API to advance to the next round
 			const response = await axios.post("/api/advanceRound");
-			
+
 			// Reload submissions to reflect the changes
 			await loadSubmissions();
-			
-			toast.success(`Advanced to next round! ${response.data.updatedCount} submissions updated.`);
+
+			toast.success(
+				`Advanced to next round! ${response.data.updatedCount} submissions updated.`
+			);
 		} catch (error) {
 			console.error("Error advancing to next round:", error);
 			toast.error("Failed to advance to next round");
@@ -365,7 +374,7 @@ export default function AdminDashboard() {
 							</div>
 						</div>
 
-						{/* Submission Toggle */}
+						{/* Submission Toggle and Next Round */}
 						<div className="flex items-center space-x-4">
 							<div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-green-100">
 								<div className="flex items-center space-x-3">
@@ -389,14 +398,32 @@ export default function AdminDashboard() {
 											{submissionsOpen ? "Open" : "Closed"}
 										</span>
 									</button>
-									<button
-										onClick={handleAdvanceRound}
-										className="flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-300 bg-blue-500 text-white shadow-lg"
-										title="Move to next round"
-									>
-										<Clock className="w-4 h-4" />
-										<span className="font-medium">Next Round</span>
-									</button>
+									<AlertDialog>
+										<AlertDialogTrigger asChild>
+											<button className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-blue-500 hover:bg-blue-600 text-white">
+												<ArrowRight className="w-4 h-4" />
+												<span>Next Round</span>
+											</button>
+										</AlertDialogTrigger>
+										<AlertDialogContent>
+											<AlertDialogHeader>
+												<AlertDialogTitle>
+													Advance to Next Round?
+												</AlertDialogTitle>
+												<AlertDialogDescription>
+													This action cannot be undone. This will move all
+													selected submissions to pending and all rejected
+													submissions to permanently rejected.
+												</AlertDialogDescription>
+											</AlertDialogHeader>
+											<AlertDialogFooter>
+												<AlertDialogCancel>Cancel</AlertDialogCancel>
+												<AlertDialogAction onClick={handleAdvanceRound}>
+													Continue
+												</AlertDialogAction>
+											</AlertDialogFooter>
+										</AlertDialogContent>
+									</AlertDialog>
 								</div>
 							</div>
 						</div>
@@ -428,7 +455,9 @@ export default function AdminDashboard() {
 					>
 						<div className="flex items-center justify-between">
 							<div>
-								<p className="text-purple-600 text-sm font-medium">Permanently Rejected</p>
+								<p className="text-purple-600 text-sm font-medium">
+									Permanently Rejected
+								</p>
 								<p className="text-2xl font-bold text-purple-800">
 									{rejectedFinalSubmissions.length}
 								</p>
@@ -511,7 +540,9 @@ export default function AdminDashboard() {
 									<Ban className="w-5 h-5 text-white" />
 								</div>
 								<div>
-									<h2 className="text-xl font-bold text-purple-800">Permanently Rejected</h2>
+									<h2 className="text-xl font-bold text-purple-800">
+										Permanently Rejected
+									</h2>
 									<p className="text-purple-600 text-sm">
 										{filteredSubmissions("rejected_final").length} submissions
 									</p>
@@ -534,7 +565,7 @@ export default function AdminDashboard() {
 							)}
 						</div>
 					</div>
-					
+
 					{/* Rejected Column */}
 					<div className="space-y-6">
 						<div className="bg-red-100/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-red-200">
