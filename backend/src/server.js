@@ -4,6 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth.js";
 import submitRoutes from "./routes/submissions.js";
+import adminRoutes from "./routes/admin.js";
 
 dotenv.config();
 const app = express();
@@ -23,6 +24,7 @@ app.use(
 
 app.use("/", authRoutes);
 app.use("/", submitRoutes);
+app.use("/", adminRoutes);
 
 app.listen(5000, () => {
 	console.log("Server running on port 5000");
