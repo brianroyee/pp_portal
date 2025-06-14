@@ -154,10 +154,8 @@ export default function AdminDashboard() {
 
 	const SubmissionCard = ({
 		submission,
-		showActions = false,
 	}: {
 		submission: Submission;
-		showActions?: boolean;
 	}) => (
 		<div
 			className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100 hover:shadow-xl transition-all duration-300 group cursor-pointer"
