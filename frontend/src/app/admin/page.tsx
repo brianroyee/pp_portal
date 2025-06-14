@@ -79,7 +79,7 @@ export default function AdminDashboard() {
 
 	const handleStatusChange = async (
 		email: string,
-		newStatus: "selected" | "rejected"
+		newStatus: "selected" | "rejected" | "pending"
 	) => {
 		try {
 			// Update UI immediately for better UX
@@ -198,31 +198,77 @@ export default function AdminDashboard() {
 							{formatDate(submission.submitted_at)}
 						</div>
 
-						{showActions && (
-							<div
-								className="flex space-x-2"
-								onClick={(e) => e.stopPropagation()}
-							>
-								<button
-									onClick={() =>
-										handleStatusChange(submission.email, "selected")
-									}
-									className="p-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors duration-200 shadow-sm"
-									title="Accept"
-								>
-									<Check className="w-4 h-4" />
-								</button>
-								<button
-									onClick={() =>
-										handleStatusChange(submission.email, "rejected")
-									}
-									className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors duration-200 shadow-sm"
-									title="Reject"
-								>
-									<X className="w-4 h-4" />
-								</button>
-							</div>
-						)}
+						<div
+							className="flex space-x-2"
+							onClick={(e) => e.stopPropagation()}
+						>
+							{submission.status === "pending" && (
+								<>
+									<button
+										onClick={() =>
+											handleStatusChange(submission.email, "selected")
+										}
+										className="p-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors duration-200 shadow-sm"
+										title="Accept"
+									>
+										<Check className="w-4 h-4" />
+									</button>
+									<button
+										onClick={() =>
+											handleStatusChange(submission.email, "rejected")
+										}
+										className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors duration-200 shadow-sm"
+										title="Reject"
+									>
+										<X className="w-4 h-4" />
+									</button>
+								</>
+							)}
+							{submission.status === "selected" && (
+								<>
+									<button
+										onClick={() =>
+											handleStatusChange(submission.email, "pending")
+										}
+										className="p-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors duration-200 shadow-sm"
+										title="Mark as Pending"
+									>
+										<Clock className="w-4 h-4" />
+									</button>
+									<button
+										onClick={() =>
+											handleStatusChange(submission.email, "rejected")
+										}
+										className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors duration-200 shadow-sm"
+										title="Reject"
+									>
+										<X className="w-4 h-4" />
+									</button>
+								</>
+							)}
+							{submission.status === "rejected" && (
+								<>
+									<button
+										onClick={() =>
+											handleStatusChange(submission.email, "pending")
+										}
+										className="p-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors duration-200 shadow-sm"
+										title="Mark as Pending"
+									>
+										<Clock className="w-4 h-4" />
+									</button>
+									<button
+										onClick={() =>
+											handleStatusChange(submission.email, "selected")
+										}
+										className="p-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors duration-200 shadow-sm"
+										title="Accept"
+									>
+										<Check className="w-4 h-4" />
+									</button>
+								</>
+							)}
+						</div>
 					</div>
 				</div>
 			</div>
@@ -404,7 +450,10 @@ export default function AdminDashboard() {
 
 						<div className="space-y-4 max-h-[600px] overflow-y-auto">
 							{filteredSubmissions("rejected").map((submission) => (
-								<SubmissionCard key={submission.id} submission={submission} />
+								<SubmissionCard
+									key={submission.email}
+									submission={submission}
+								/>
 							))}
 							{filteredSubmissions("rejected").length === 0 && (
 								<div className="text-center py-8 text-red-400">
@@ -468,7 +517,10 @@ export default function AdminDashboard() {
 
 						<div className="space-y-4 max-h-[600px] overflow-y-auto">
 							{filteredSubmissions("selected").map((submission) => (
-								<SubmissionCard key={submission.id} submission={submission} />
+								<SubmissionCard
+									key={submission.email}
+									submission={submission}
+								/>
 							))}
 							{filteredSubmissions("selected").length === 0 && (
 								<div className="text-center py-8 text-green-400">
@@ -486,8 +538,8 @@ export default function AdminDashboard() {
 				<SubmissionModal
 					submission={selectedSubmission}
 					onClose={() => setSelectedSubmission(null)}
-					onStatusChange={(id, status) => {
-						handleStatusChange(id, status);
+					onStatusChange={(email, status) => {
+						handleStatusChange(email, status);
 						setSelectedSubmission(null);
 					}}
 				/>
@@ -511,7 +563,7 @@ export default function AdminDashboard() {
 					overflow: hidden;
 				}
 			`}</style>
-			<Toaster />
+			<Toaster richColors />
 		</div>
 	);
 }
