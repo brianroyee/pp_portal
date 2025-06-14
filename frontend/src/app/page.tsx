@@ -49,7 +49,12 @@ const LoginPage = () => {
 				showAlert("Login successful! Redirecting...", "success");
 
 				setTimeout(() => {
-					router.push("/submissions");
+					console.log(response.data.user.role);
+					if (response.data.user.role === "admin") {
+						router.push("/admin");
+					} else {
+						router.push("/submissions");
+					}
 				}, 1500);
 			}
 			setIsLoading(false);
