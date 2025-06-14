@@ -96,7 +96,13 @@ export default function AdminDashboard() {
 			});
 
 			toast.success(
-				`Submission ${newStatus === "selected" ? "accepted" : "rejected"}`
+				`Submission ${
+					newStatus === "selected"
+						? "accepted"
+						: newStatus === "rejected"
+						? "rejected"
+						: "pending"
+				}`
 			);
 		} catch (error) {
 			console.error("Error updating submission status:", error);
@@ -152,11 +158,7 @@ export default function AdminDashboard() {
 		});
 	};
 
-	const SubmissionCard = ({
-		submission,
-	}: {
-		submission: Submission;
-	}) => (
+	const SubmissionCard = ({ submission }: { submission: Submission }) => (
 		<div
 			className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100 hover:shadow-xl transition-all duration-300 group cursor-pointer"
 			onClick={() => setSelectedSubmission(submission)}
