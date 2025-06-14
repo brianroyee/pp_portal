@@ -264,7 +264,10 @@ export default function AdminDashboard() {
 
 				{/* Stats Cards */}
 				<div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-					<div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100">
+					<div
+						key="total"
+						className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100"
+					>
 						<div className="flex items-center justify-between">
 							<div>
 								<p className="text-green-600 text-sm font-medium">
@@ -278,7 +281,10 @@ export default function AdminDashboard() {
 						</div>
 					</div>
 
-					<div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100">
+					<div
+						key="pending"
+						className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100"
+					>
 						<div className="flex items-center justify-between">
 							<div>
 								<p className="text-amber-600 text-sm font-medium">
@@ -292,7 +298,10 @@ export default function AdminDashboard() {
 						</div>
 					</div>
 
-					<div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100">
+					<div
+						key="selected"
+						className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100"
+					>
 						<div className="flex items-center justify-between">
 							<div>
 								<p className="text-green-600 text-sm font-medium">Selected</p>
@@ -304,7 +313,10 @@ export default function AdminDashboard() {
 						</div>
 					</div>
 
-					<div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100">
+					<div
+						key="rejected"
+						className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100"
+					>
 						<div className="flex items-center justify-between">
 							<div>
 								<p className="text-red-600 text-sm font-medium">Rejected</p>
@@ -385,7 +397,7 @@ export default function AdminDashboard() {
 						<div className="space-y-4 max-h-[600px] overflow-y-auto">
 							{filteredSubmissions("pending").map((submission) => (
 								<SubmissionCard
-									key={submission.id}
+									key={submission.email}
 									submission={submission}
 									showActions={true}
 								/>
