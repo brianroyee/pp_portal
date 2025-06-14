@@ -49,32 +49,21 @@ router.post("/submit", upload.single("image"), async (req, res) => {
 });
 
 router.get("/submissions", async (req, res) => {
-	if (!req.session.username) {
-		return res.status(401).json({ success: false, message: "Unauthorized" });
+	if (!req.body.email) {
+		return res.status(404).json({ success: false, message: "Email not found" });
 	}
-
 	const emailKey = sanitizeEmailKey(req.body.email);
 	const snapshot = await db.ref(`otps/${emailKey}`).once("value");
 	const data = snapshot.val();
+	console.log(data);
 
-	if (!data) {
+	if (data) {
+		return res.status(200).json({ success: true, data });
+	} else {
 		return res
 			.status(404)
-			.json({ success: false, message: "No submission found" });
+			.json({ success: false, message: "No submissions found" });
 	}
-
-	res.status(200).json({
-		success: true,
-		user: {
-			username: req.session.username,
-			email: req.session.email,
-			name: req.session.name,
-		},
-		submission: {
-			prompt: data.prompt,
-			image_url: data.image_url,
-		},
-	});
 });
 
 export default router;

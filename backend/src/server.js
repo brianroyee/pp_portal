@@ -3,7 +3,7 @@ import session from "express-session";
 import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth.js";
-import submitRoutes from "./routes/submit.js";
+import submitRoutes from "./routes/submissions.js";
 
 dotenv.config();
 const app = express();
