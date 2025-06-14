@@ -301,28 +301,6 @@ export default function AdminDashboard() {
 									>
 										<Check className="w-4 h-4" />
 									</button>
-									<button
-										onClick={() =>
-											handleStatusChange(submission.email, "rejected_final")
-										}
-										className="p-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors duration-200 shadow-sm"
-										title="Permanently Reject"
-									>
-										<Ban className="w-4 h-4" />
-									</button>
-								</>
-							)}
-							{submission.status === "rejected_final" && (
-								<>
-									<button
-										onClick={() =>
-											handleStatusChange(submission.email, "pending")
-										}
-										className="p-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors duration-200 shadow-sm"
-										title="Mark as Pending"
-									>
-										<Clock className="w-4 h-4" />
-									</button>
 								</>
 							)}
 						</div>
