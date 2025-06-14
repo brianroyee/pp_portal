@@ -69,6 +69,8 @@ export default function AdminDashboard() {
 			router.push("/admin/not-authorized");
 			return;
 		}
+		const user = JSON.parse(localStorage.getItem("user") || "{}");
+		setSubmissionsOpen(user.formStatus === "opened");
 		console.log("Loading submissions...");
 		loadSubmissions();
 
