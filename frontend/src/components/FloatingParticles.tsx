@@ -10,12 +10,12 @@ interface Particle {
   animationDelay: string;
 }
 
-export default function FloatingParticles() {
+export default function FloatingParticles({ count = 6, color = "green" }: { count?: number; color?: string }) {
   const [particles, setParticles] = useState<Particle[]>([]);
   
   useEffect(() => {
     // Generate particles only on the client side
-    const newParticles = Array(6).fill(null).map((_, i) => ({
+    const newParticles = Array(count).fill(null).map((_, i) => ({
       id: i,
       left: `${Math.random() * 100}%`,
       top: `${Math.random() * 100}%`,
@@ -24,14 +24,14 @@ export default function FloatingParticles() {
     }));
     
     setParticles(newParticles);
-  }, []);
+  }, [count]);
 
   return (
     <>
       {particles.map((particle) => (
         <div
           key={particle.id}
-          className="absolute w-2 h-2 bg-green-300 rounded-full opacity-30"
+          className={`absolute w-2 h-2 bg-${color}-300 rounded-full opacity-30`}
           style={{
             left: particle.left,
             top: particle.top,

@@ -3,24 +3,23 @@
 import { useState, useEffect } from "react";
 import {
 	Settings,
-	Users,
 	FileText,
 	Check,
 	X,
-	Eye,
-	Calendar,
 	TreePine,
 	Leaf,
 	Mountain,
 	Lock,
 	Unlock,
-	Filter,
 	Search,
 	Clock,
 	Image as ImageIcon,
 } from "lucide-react";
 import axios from "axios";
-import { toast } from "sonner";
+import { toast, Toaster } from "sonner";
+import Image from "next/image";
+import FloatingParticles from "@/components/FloatingParticles";
+import { useRouter } from "next/navigation";
 
 interface Submission {
 	id: string;
@@ -37,10 +36,9 @@ export default function AdminDashboard() {
 	const [submissions, setSubmissions] = useState<Submission[]>([]);
 	const [submissionsOpen, setSubmissionsOpen] = useState(true);
 	const [searchTerm, setSearchTerm] = useState("");
-	const [selectedSubmission, setSelectedSubmission] =
-		useState<Submission | null>(null);
+	const router = useRouter();
 
-	const pendingSubmissions = submissions;
+	const pendingSubmissions = submissions.filter((s) => s.status === "pending");
 	const selectedSubmissions = submissions.filter(
 		(s) => s.status === "selected"
 	);
@@ -59,14 +57,29 @@ export default function AdminDashboard() {
 				}
 			);
 			setSubmissions(response.data.submissions);
-			console.table(response.data.submissions);
+			console.log("Submissions loaded");
 		} catch (error) {
 			console.error("Error fetching submissions:", error);
+			router.push("/admin/not-authorized");
 		}
 	};
 
 	useEffect(() => {
+		if (!localStorage.getItem("user")) {
+			router.push("/admin/not-authorized");
+			return;
+		}
+		console.log("Loading submissions...");
 		loadSubmissions();
+
+		// Set up interval to refresh submissions every minute
+		const intervalId = setInterval(() => {
+			loadSubmissions();
+		}, 60000 * 5); // 60000 ms = 1 minute
+
+		// Clean up interval on component unmount
+		return () => clearInterval(intervalId);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	const handleStatusChange = (
@@ -89,6 +102,12 @@ export default function AdminDashboard() {
 				email,
 				status: !submissionsOpen,
 			});
+			console.log("Submissions toggled");
+			if (!submissionsOpen) {
+				toast.success("Submissions open");
+			} else {
+				toast.success("Submissions closed");
+			}
 		} catch {
 			console.error("Error toggling submissions");
 			toast.error("Error toggling submissions");
@@ -125,9 +144,11 @@ export default function AdminDashboard() {
 		<div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100 hover:shadow-xl transition-all duration-300 group">
 			<div className="flex items-start space-x-4">
 				{submission.image_url ? (
-					<img
+					<Image
 						src={submission.image_url}
 						alt="Submission"
+						width={80}
+						height={80}
 						className="w-20 h-20 rounded-xl object-cover shadow-md group-hover:scale-105 transition-transform duration-300"
 					/>
 				) : (
@@ -201,18 +222,7 @@ export default function AdminDashboard() {
 				</div>
 
 				{/* Floating particles */}
-				{[...Array(8)].map((_, i) => (
-					<div
-						key={i}
-						className="absolute w-2 h-2 bg-green-300 rounded-full opacity-20"
-						style={{
-							left: `${Math.random() * 100}%`,
-							top: `${Math.random() * 100}%`,
-							animation: `float ${4 + Math.random() * 3}s ease-in-out infinite`,
-							animationDelay: `${Math.random() * 3}s`,
-						}}
-					/>
-				))}
+				<FloatingParticles count={8} color="green" />
 			</div>
 
 			<div className="relative z-10 p-6">
@@ -228,7 +238,7 @@ export default function AdminDashboard() {
 									Admin Panel
 								</h1>
 								<p className="text-green-700 opacity-80">
-									Manage submissions and curate nature's gallery
+									Manage submissions and curate nature&apos;s gallery
 								</p>
 							</div>
 						</div>
@@ -265,7 +275,10 @@ export default function AdminDashboard() {
 
 				{/* Stats Cards */}
 				<div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-					<div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100">
+					<div
+						key="total"
+						className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100"
+					>
 						<div className="flex items-center justify-between">
 							<div>
 								<p className="text-green-600 text-sm font-medium">
@@ -279,7 +292,10 @@ export default function AdminDashboard() {
 						</div>
 					</div>
 
-					<div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100">
+					<div
+						key="pending"
+						className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100"
+					>
 						<div className="flex items-center justify-between">
 							<div>
 								<p className="text-amber-600 text-sm font-medium">
@@ -293,7 +309,10 @@ export default function AdminDashboard() {
 						</div>
 					</div>
 
-					<div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100">
+					<div
+						key="selected"
+						className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100"
+					>
 						<div className="flex items-center justify-between">
 							<div>
 								<p className="text-green-600 text-sm font-medium">Selected</p>
@@ -305,7 +324,10 @@ export default function AdminDashboard() {
 						</div>
 					</div>
 
-					<div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100">
+					<div
+						key="rejected"
+						className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100"
+					>
 						<div className="flex items-center justify-between">
 							<div>
 								<p className="text-red-600 text-sm font-medium">Rejected</p>
@@ -386,7 +408,7 @@ export default function AdminDashboard() {
 						<div className="space-y-4 max-h-[600px] overflow-y-auto">
 							{filteredSubmissions("pending").map((submission) => (
 								<SubmissionCard
-									key={submission.id}
+									key={submission.email}
 									submission={submission}
 									showActions={true}
 								/>
@@ -449,6 +471,7 @@ export default function AdminDashboard() {
 					overflow: hidden;
 				}
 			`}</style>
+			<Toaster richColors />
 		</div>
 	);
 }

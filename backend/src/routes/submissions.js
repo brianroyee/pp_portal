@@ -50,6 +50,7 @@ router.post("/submit", upload.single("image"), async (req, res) => {
 });
 
 router.get("/submissions", async (req, res) => {
+	console.log("Loading Submissions");
 	const { email } = req.query;
 	if (!email) {
 		return res.status(404).json({ success: false, message: "Email not found" });
@@ -73,8 +74,6 @@ router.get("/submissions", async (req, res) => {
 		const filteredSubmissions = Object.values(submissionData || {}).filter(
 			(entry) => entry?.prompt?.trim() && entry?.image_url?.trim()
 		);
-
-		console.group("submissionData", filteredSubmissions);
 
 		res.status(200).json({ success: true, submissions: filteredSubmissions });
 	} catch {
