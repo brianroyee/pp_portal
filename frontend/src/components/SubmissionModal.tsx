@@ -1,6 +1,6 @@
 "use client";
 
-import { X, Check, Clock, Ban } from "lucide-react";
+import { X, Check, Clock } from "lucide-react";
 import Image from "next/image";
 import { Submission } from "@/types/submission";
 import { useEffect, useState } from "react";

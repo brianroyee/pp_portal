@@ -155,18 +155,16 @@ export default function AdminDashboard() {
 			toast.error("Error toggling submissions");
 		}
 	};
-
+	
 	const handleAdvanceRound = async () => {
 		try {
 			// Call the API to advance to the next round
 			const response = await axios.post("/api/advanceRound");
-
+			
 			// Reload submissions to reflect the changes
 			await loadSubmissions();
-
-			toast.success(
-				`Advanced to next round! ${response.data.updatedCount} submissions updated.`
-			);
+			
+			toast.success(`Advanced to next round! ${response.data.updatedCount} submissions updated.`);
 		} catch (error) {
 			console.error("Error advancing to next round:", error);
 			toast.error("Failed to advance to next round");
