@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
 	Upload,
 	Send,
@@ -14,6 +14,12 @@ import axios from "axios";
 import { toast, Toaster } from "sonner";
 import Image from "next/image";
 
+interface User {
+	username: string;
+	email: string;
+	name: string;
+}
+
 export default function SubmissionPage() {
 	const [prompt, setPrompt] = useState("");
 	const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -21,6 +27,14 @@ export default function SubmissionPage() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const flaskUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000";
+	const [user, setUser] = useState<User | null>(null);
+
+	useEffect(() => {
+		const storedUser = localStorage.getItem("user");
+		if (storedUser) {
+			setUser(JSON.parse(storedUser));
+		}
+	}, []);
 
 	const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
@@ -62,6 +76,7 @@ export default function SubmissionPage() {
 
 		// Here you would integrate with your Flask backend
 		const formData = new FormData();
+		formData.append("email", user?.email || "");
 		formData.append("text", prompt);
 		if (selectedFile) {
 			formData.append("image", selectedFile);
@@ -69,6 +84,12 @@ export default function SubmissionPage() {
 
 		if (!prompt && !selectedFile) {
 			toast.error("Please enter a prompt or upload an image.");
+			setIsSubmitting(false);
+			return;
+		}
+
+		if (getWordCount(prompt) > 200) {
+			toast.error("Prompt must be less than 200 words.");
 			setIsSubmitting(false);
 			return;
 		}
@@ -97,8 +118,10 @@ export default function SubmissionPage() {
 		removeImage();
 		setIsSubmitting(false);
 		toast.success("Submission successful!");
+	};
 
-		// You can add success notification here
+	const getWordCount = (text: string) => {
+		return text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
 	};
 
 	return (
@@ -165,8 +188,14 @@ export default function SubmissionPage() {
 										className="w-full p-6 border-2 border-green-200 rounded-2xl focus:border-green-400 focus:ring-4 focus:ring-green-100 transition-all duration-300 bg-gradient-to-br from-white to-green-50/30 text-green-900 placeholder-green-400 resize-none text-lg"
 										required
 									/>
-									<div className="absolute bottom-4 right-4 text-sm text-green-500 font-medium">
-										{prompt.length} characters
+									<div
+										className={`absolute bottom-4 right-4 text-sm font-medium ${
+											getWordCount(prompt) > 200
+												? "text-red-600"
+												: "text-green-600"
+										}`}
+									>
+										{getWordCount(prompt)} words
 									</div>
 								</div>
 							</div>

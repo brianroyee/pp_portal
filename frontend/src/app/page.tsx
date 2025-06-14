@@ -11,41 +11,12 @@ interface Alert {
 	type: "success" | "danger";
 }
 
-interface User {
-	username: string;
-	password: string;
-	email: string;
-	name: string;
-}
-
 const LoginPage = () => {
 	const [formData, setFormData] = useState({ username: "", password: "" });
 	const [alerts, setAlerts] = useState<Alert[]>([]);
 	const [isLoading, setIsLoading] = useState(false);
 	const router = useRouter();
 	const flaskUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000";
-
-	// Mock user data for demonstration
-	const mockUsers: User[] = [
-		{
-			username: "john_doe",
-			password: "nature123",
-			email: "john@example.com",
-			name: "John Doe",
-		},
-		{
-			username: "jane_smith",
-			password: "green456",
-			email: "jane@example.com",
-			name: "Jane Smith",
-		},
-		{
-			username: "demo",
-			password: "demo",
-			email: "demo@techiepedia.com",
-			name: "Demo User",
-		},
-	];
 
 	const showAlert = (
 		message: string,
@@ -71,26 +42,20 @@ const LoginPage = () => {
 
 		try {
 			const response = await axios.post(`${flaskUrl}/login`, formData);
+			console.log(response.data.user);
 			if (response) {
 				// Store user data in localStorage or context
-				localStorage.setItem("user", JSON.stringify(response));
+				localStorage.setItem("user", JSON.stringify(response.data.user));
 				showAlert("Login successful! Redirecting...", "success");
 
 				setTimeout(() => {
-					router.push("/submissions");
+					console.log(response.data.user.role);
+					if (response.data.user.role === "admin") {
+						router.push("/admin");
+					} else {
+						router.push("/submissions");
+					}
 				}, 1500);
-			} else {
-				const userExists = mockUsers.find(
-					(user) => user.username === formData.username
-				);
-				if (userExists) {
-					showAlert("Incorrect password. Please try again.", "danger");
-				} else {
-					showAlert(
-						"Username not found. Please check your credentials.",
-						"danger"
-					);
-				}
 			}
 			setIsLoading(false);
 		} catch {
