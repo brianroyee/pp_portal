@@ -485,7 +485,6 @@ export default function AdminDashboard() {
 								<SubmissionCard
 									key={submission.email}
 									submission={submission}
-									showActions={true}
 								/>
 							))}
 							{filteredSubmissions("pending").length === 0 && (
