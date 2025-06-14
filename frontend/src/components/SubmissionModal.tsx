@@ -3,12 +3,14 @@
 import { X, Check } from "lucide-react";
 import Image from "next/image";
 import { Submission } from "@/types/submission";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import { toast } from "sonner";
 
 interface SubmissionModalProps {
 	submission: Submission;
 	onClose: () => void;
-	onStatusChange: (id: string, status: "selected" | "rejected") => void;
+	onStatusChange: (email: string, status: "selected" | "rejected") => void;
 }
 
 export default function SubmissionModal({
@@ -16,6 +18,8 @@ export default function SubmissionModal({
 	onClose,
 	onStatusChange,
 }: SubmissionModalProps) {
+	const [isUpdating, setIsUpdating] = useState(false);
+	
 	// Disable body scrolling when modal is open
 	useEffect(() => {
 		document.body.style.overflow = "hidden";
@@ -31,6 +35,26 @@ export default function SubmissionModal({
 			hour: "2-digit",
 			minute: "2-digit",
 		});
+	};
+	
+	const handleStatusChange = async (status: "selected" | "rejected") => {
+		setIsUpdating(true);
+		try {
+			// Call the API to update status in Firebase
+			await axios.post('/api/statusChange', {
+				email: submission.email,
+				status
+			});
+			
+			// Call the parent component's onStatusChange to update UI
+			onStatusChange(submission.email, status);
+			toast.success(`Submission ${status === "selected" ? "accepted" : "rejected"}`);
+		} catch (error) {
+			console.error("Error updating submission status:", error);
+			toast.error("Failed to update submission status");
+		} finally {
+			setIsUpdating(false);
+		}
 	};
 
 	return (
@@ -86,18 +110,44 @@ export default function SubmissionModal({
 
 						<div className="flex space-x-4">
 							<button
-								onClick={() => onStatusChange(submission.id, "selected")}
-								className="flex-1 py-3 cursor-pointer bg-green-500 hover:bg-green-600 text-white rounded-xl transition-colors flex items-center justify-center space-x-2"
+								onClick={() => handleStatusChange("selected")}
+								disabled={isUpdating}
+								className="flex-1 py-3 cursor-pointer bg-green-500 hover:bg-green-600 disabled:bg-green-300 text-white rounded-xl transition-colors flex items-center justify-center space-x-2"
 							>
-								<Check className="w-5 h-5" />
-								<span>Accept</span>
+								{isUpdating ? (
+									<span className="flex items-center">
+										<svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+											<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+											<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+										</svg>
+										Processing...
+									</span>
+								) : (
+									<>
+										<Check className="w-5 h-5" />
+										<span>Accept</span>
+									</>
+								)}
 							</button>
 							<button
-								onClick={() => onStatusChange(submission.id, "rejected")}
-								className="flex-1 py-3 cursor-pointer bg-red-500 hover:bg-red-600 text-white rounded-xl transition-colors flex items-center justify-center space-x-2"
+								onClick={() => handleStatusChange("rejected")}
+								disabled={isUpdating}
+								className="flex-1 py-3 cursor-pointer bg-red-500 hover:bg-red-600 disabled:bg-red-300 text-white rounded-xl transition-colors flex items-center justify-center space-x-2"
 							>
-								<X className="w-5 h-5" />
-								<span>Reject</span>
+								{isUpdating ? (
+									<span className="flex items-center">
+										<svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+											<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+											<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+										</svg>
+										Processing...
+									</span>
+								) : (
+									<>
+										<X className="w-5 h-5" />
+										<span>Reject</span>
+									</>
+								)}
 							</button>
 						</div>
 					</div>
