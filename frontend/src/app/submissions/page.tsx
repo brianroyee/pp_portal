@@ -13,11 +13,13 @@ import FloatingParticles from "@/components/FloatingParticles";
 import axios from "axios";
 import { toast, Toaster } from "sonner";
 import Image from "next/image";
+import { notFound, redirect } from "next/navigation";
 
 interface User {
 	username: string;
 	email: string;
 	name: string;
+	formStatus: string;
 }
 
 export default function SubmissionPage() {
@@ -34,7 +36,16 @@ export default function SubmissionPage() {
 		if (storedUser) {
 			setUser(JSON.parse(storedUser));
 		}
+		if (!storedUser) {
+			redirect("/login");
+		}
 	}, []);
+
+	useEffect(() => {
+		if (user && user.formStatus === "closed") {
+			notFound();
+		}
+	}, [user]);
 
 	const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
