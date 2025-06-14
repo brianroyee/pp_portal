@@ -13,7 +13,7 @@ import FloatingParticles from "@/components/FloatingParticles";
 import axios from "axios";
 import { toast, Toaster } from "sonner";
 import Image from "next/image";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 interface User {
 	username: string;
@@ -43,7 +43,7 @@ export default function SubmissionPage() {
 
 	useEffect(() => {
 		if (user && user.formStatus === "closed") {
-			redirect("/submissions/closed");
+			notFound();
 		}
 	}, [user]);
 
