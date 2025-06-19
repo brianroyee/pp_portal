@@ -14,29 +14,41 @@ import {
 	Search,
 	Clock,
 	Image as ImageIcon,
+	Ban,
+	ArrowRight,
+	LogOut,
 } from "lucide-react";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogDescription,
+	AlertDialogFooter,
+	AlertDialogHeader,
+	AlertDialogTitle,
+	AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import axios from "axios";
 import { toast, Toaster } from "sonner";
 import Image from "next/image";
 import FloatingParticles from "@/components/FloatingParticles";
+import SubmissionModal from "@/components/SubmissionModal";
+import { Submission } from "@/types/submission";
 import { useRouter } from "next/navigation";
-
-interface Submission {
-	id: string;
-	username: string;
-	email: string;
-	name: string;
-	prompt: string;
-	image_url?: string;
-	submitted_at: string;
-	status: "pending" | "selected" | "rejected";
-}
 
 export default function AdminDashboard() {
 	const [submissions, setSubmissions] = useState<Submission[]>([]);
 	const [submissionsOpen, setSubmissionsOpen] = useState(true);
 	const [searchTerm, setSearchTerm] = useState("");
+	const [selectedSubmission, setSelectedSubmission] =
+		useState<Submission | null>(null);
 	const router = useRouter();
+
+	const handleLogout = () => {
+		localStorage.removeItem("user");
+		router.push("/");
+	};
 
 	const pendingSubmissions = submissions.filter((s) => s.status === "pending");
 	const selectedSubmissions = submissions.filter(
@@ -44,6 +56,9 @@ export default function AdminDashboard() {
 	);
 	const rejectedSubmissions = submissions.filter(
 		(s) => s.status === "rejected"
+	);
+	const rejectedFinalSubmissions = submissions.filter(
+		(s) => s.status === "rejected_final"
 	);
 
 	const loadSubmissions = async () => {
@@ -69,6 +84,8 @@ export default function AdminDashboard() {
 			router.push("/admin/not-authorized");
 			return;
 		}
+		const user = JSON.parse(localStorage.getItem("user") || "{}");
+		setSubmissionsOpen(user.formStatus === "opened");
 		console.log("Loading submissions...");
 		loadSubmissions();
 
@@ -82,15 +99,46 @@ export default function AdminDashboard() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	const handleStatusChange = (
-		submissionId: string,
-		newStatus: "selected" | "rejected"
+	const handleStatusChange = async (
+		email: string,
+		newStatus: "selected" | "rejected" | "rejected_final" | "pending"
 	) => {
-		setSubmissions((prev) =>
-			prev.map((sub) =>
-				sub.id === submissionId ? { ...sub, status: newStatus } : sub
-			)
-		);
+		try {
+			// Update UI immediately for better UX
+			setSubmissions((prev) =>
+				prev.map((sub) =>
+					sub.email === email ? { ...sub, status: newStatus } : sub
+				)
+			);
+
+			// Send API request to update status in Firebase
+			await axios.post("/api/statusChange", {
+				email,
+				status: newStatus,
+			});
+
+			toast.success(
+				`Submission ${
+					newStatus === "selected"
+						? "accepted"
+						: newStatus === "rejected"
+						? "rejected"
+						: newStatus === "rejected_final"
+						? "permanently rejected"
+						: "pending"
+				}`
+			);
+		} catch (error) {
+			console.error("Error updating submission status:", error);
+			toast.error("Failed to update submission status");
+
+			// Revert UI change on error
+			setSubmissions((prev) =>
+				prev.map((sub) =>
+					sub.email === email ? { ...sub, status: "pending" } : sub
+				)
+			);
+		}
 	};
 
 	const handleToggleSubmissions = () => {
@@ -114,6 +162,23 @@ export default function AdminDashboard() {
 		}
 	};
 
+	const handleAdvanceRound = async () => {
+		try {
+			// Call the API to advance to the next round
+			const response = await axios.post("/api/advanceRound");
+
+			// Reload submissions to reflect the changes
+			await loadSubmissions();
+
+			toast.success(
+				`Advanced to next round! ${response.data.updatedCount} submissions updated.`
+			);
+		} catch (error) {
+			console.error("Error advancing to next round:", error);
+			toast.error("Failed to advance to next round");
+		}
+	};
+
 	const filteredSubmissions = (status: string) => {
 		const filtered = submissions.filter((s) => s.status === status);
 		if (!searchTerm) return filtered;
@@ -134,14 +199,11 @@ export default function AdminDashboard() {
 		});
 	};
 
-	const SubmissionCard = ({
-		submission,
-		showActions = false,
-	}: {
-		submission: Submission;
-		showActions?: boolean;
-	}) => (
-		<div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100 hover:shadow-xl transition-all duration-300 group">
+	const SubmissionCard = ({ submission }: { submission: Submission }) => (
+		<div
+			className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100 hover:shadow-xl transition-all duration-300 group cursor-pointer"
+			onClick={() => setSelectedSubmission(submission)}
+		>
 			<div className="flex items-start space-x-4">
 				{submission.image_url ? (
 					<Image
@@ -177,24 +239,77 @@ export default function AdminDashboard() {
 							{formatDate(submission.submitted_at)}
 						</div>
 
-						{showActions && (
-							<div className="flex space-x-2">
-								<button
-									onClick={() => handleStatusChange(submission.id, "selected")}
-									className="p-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors duration-200 shadow-sm"
-									title="Accept"
-								>
-									<Check className="w-4 h-4" />
-								</button>
-								<button
-									onClick={() => handleStatusChange(submission.id, "rejected")}
-									className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors duration-200 shadow-sm"
-									title="Reject"
-								>
-									<X className="w-4 h-4" />
-								</button>
-							</div>
-						)}
+						<div
+							className="flex space-x-2"
+							onClick={(e) => e.stopPropagation()}
+						>
+							{submission.status === "pending" && (
+								<>
+									<button
+										onClick={() =>
+											handleStatusChange(submission.email, "selected")
+										}
+										className="p-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors duration-200 shadow-sm"
+										title="Accept"
+									>
+										<Check className="w-4 h-4" />
+									</button>
+									<button
+										onClick={() =>
+											handleStatusChange(submission.email, "rejected")
+										}
+										className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors duration-200 shadow-sm"
+										title="Reject"
+									>
+										<X className="w-4 h-4" />
+									</button>
+								</>
+							)}
+							{submission.status === "selected" && (
+								<>
+									<button
+										onClick={() =>
+											handleStatusChange(submission.email, "pending")
+										}
+										className="p-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors duration-200 shadow-sm"
+										title="Mark as Pending"
+									>
+										<Clock className="w-4 h-4" />
+									</button>
+									<button
+										onClick={() =>
+											handleStatusChange(submission.email, "rejected")
+										}
+										className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors duration-200 shadow-sm"
+										title="Reject"
+									>
+										<X className="w-4 h-4" />
+									</button>
+								</>
+							)}
+							{submission.status === "rejected" && (
+								<>
+									<button
+										onClick={() =>
+											handleStatusChange(submission.email, "pending")
+										}
+										className="p-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors duration-200 shadow-sm"
+										title="Mark as Pending"
+									>
+										<Clock className="w-4 h-4" />
+									</button>
+									<button
+										onClick={() =>
+											handleStatusChange(submission.email, "selected")
+										}
+										className="p-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors duration-200 shadow-sm"
+										title="Accept"
+									>
+										<Check className="w-4 h-4" />
+									</button>
+								</>
+							)}
+						</div>
 					</div>
 				</div>
 			</div>
@@ -243,13 +358,10 @@ export default function AdminDashboard() {
 							</div>
 						</div>
 
-						{/* Submission Toggle */}
+						{/* Submission Toggle and Next Round */}
 						<div className="flex items-center space-x-4">
 							<div className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-green-100">
 								<div className="flex items-center space-x-3">
-									<span className="text-green-800 font-medium">
-										Submissions:
-									</span>
 									<button
 										onClick={() => handleToggleSubmissions()}
 										className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-300 ${
@@ -267,6 +379,39 @@ export default function AdminDashboard() {
 											{submissionsOpen ? "Open" : "Closed"}
 										</span>
 									</button>
+									<AlertDialog>
+										<AlertDialogTrigger asChild>
+											<button className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-blue-500 hover:bg-blue-600 text-white">
+												<ArrowRight className="w-4 h-4" />
+												<span>Next Round</span>
+											</button>
+										</AlertDialogTrigger>
+										<button
+											onClick={handleLogout}
+											className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+										>
+											<LogOut className="w-4 h-4" />
+											<span>Logout</span>
+										</button>
+										<AlertDialogContent>
+											<AlertDialogHeader>
+												<AlertDialogTitle>
+													Advance to Next Round?
+												</AlertDialogTitle>
+												<AlertDialogDescription>
+													This action cannot be undone. This will move all
+													selected submissions to pending and all rejected
+													submissions to permanently rejected.
+												</AlertDialogDescription>
+											</AlertDialogHeader>
+											<AlertDialogFooter>
+												<AlertDialogCancel>Cancel</AlertDialogCancel>
+												<AlertDialogAction onClick={handleAdvanceRound}>
+													Continue
+												</AlertDialogAction>
+											</AlertDialogFooter>
+										</AlertDialogContent>
+									</AlertDialog>
 								</div>
 							</div>
 						</div>
@@ -274,7 +419,7 @@ export default function AdminDashboard() {
 				</div>
 
 				{/* Stats Cards */}
-				<div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+				<div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
 					<div
 						key="total"
 						className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100"
@@ -289,6 +434,38 @@ export default function AdminDashboard() {
 								</p>
 							</div>
 							<FileText className="w-8 h-8 text-green-500" />
+						</div>
+					</div>
+
+					<div
+						key="rejected_final"
+						className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100"
+					>
+						<div className="flex items-center justify-between">
+							<div>
+								<p className="text-purple-600 text-sm font-medium">
+									Permanently Rejected
+								</p>
+								<p className="text-2xl font-bold text-purple-800">
+									{rejectedFinalSubmissions.length}
+								</p>
+							</div>
+							<Ban className="w-8 h-8 text-purple-500" />
+						</div>
+					</div>
+
+					<div
+						key="rejected"
+						className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100"
+					>
+						<div className="flex items-center justify-between">
+							<div>
+								<p className="text-red-600 text-sm font-medium">Rejected</p>
+								<p className="text-2xl font-bold text-red-800">
+									{rejectedSubmissions.length}
+								</p>
+							</div>
+							<X className="w-8 h-8 text-red-500" />
 						</div>
 					</div>
 
@@ -323,21 +500,6 @@ export default function AdminDashboard() {
 							<Check className="w-8 h-8 text-green-500" />
 						</div>
 					</div>
-
-					<div
-						key="rejected"
-						className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100"
-					>
-						<div className="flex items-center justify-between">
-							<div>
-								<p className="text-red-600 text-sm font-medium">Rejected</p>
-								<p className="text-2xl font-bold text-red-800">
-									{rejectedSubmissions.length}
-								</p>
-							</div>
-							<X className="w-8 h-8 text-red-500" />
-						</div>
-					</div>
 				</div>
 
 				{/* Search Bar */}
@@ -356,8 +518,42 @@ export default function AdminDashboard() {
 					</div>
 				</div>
 
-				{/* Three Column Layout */}
-				<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+				{/* Four Column Layout */}
+				<div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+					{/* Permanently Rejected Column */}
+					<div className="space-y-6">
+						<div className="bg-purple-100/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-purple-200">
+							<div className="flex items-center space-x-3">
+								<div className="p-2 bg-purple-500 rounded-lg">
+									<Ban className="w-5 h-5 text-white" />
+								</div>
+								<div>
+									<h2 className="text-xl font-bold text-purple-800">
+										Permanently Rejected
+									</h2>
+									<p className="text-purple-600 text-sm">
+										{filteredSubmissions("rejected_final").length} submissions
+									</p>
+								</div>
+							</div>
+						</div>
+
+						<div className="space-y-4 max-h-[600px] overflow-y-auto">
+							{filteredSubmissions("rejected_final").map((submission) => (
+								<SubmissionCard
+									key={submission.email}
+									submission={submission}
+								/>
+							))}
+							{filteredSubmissions("rejected_final").length === 0 && (
+								<div className="text-center py-8 text-purple-400">
+									<Ban className="w-12 h-12 mx-auto mb-4 opacity-50" />
+									<p>No permanently rejected submissions</p>
+								</div>
+							)}
+						</div>
+					</div>
+
 					{/* Rejected Column */}
 					<div className="space-y-6">
 						<div className="bg-red-100/80 backdrop-blur-sm rounded-2xl p-4 shadow-lg border border-red-200">
@@ -376,7 +572,10 @@ export default function AdminDashboard() {
 
 						<div className="space-y-4 max-h-[600px] overflow-y-auto">
 							{filteredSubmissions("rejected").map((submission) => (
-								<SubmissionCard key={submission.id} submission={submission} />
+								<SubmissionCard
+									key={submission.email}
+									submission={submission}
+								/>
 							))}
 							{filteredSubmissions("rejected").length === 0 && (
 								<div className="text-center py-8 text-red-400">
@@ -410,7 +609,6 @@ export default function AdminDashboard() {
 								<SubmissionCard
 									key={submission.email}
 									submission={submission}
-									showActions={true}
 								/>
 							))}
 							{filteredSubmissions("pending").length === 0 && (
@@ -440,7 +638,10 @@ export default function AdminDashboard() {
 
 						<div className="space-y-4 max-h-[600px] overflow-y-auto">
 							{filteredSubmissions("selected").map((submission) => (
-								<SubmissionCard key={submission.id} submission={submission} />
+								<SubmissionCard
+									key={submission.email}
+									submission={submission}
+								/>
 							))}
 							{filteredSubmissions("selected").length === 0 && (
 								<div className="text-center py-8 text-green-400">
@@ -452,6 +653,18 @@ export default function AdminDashboard() {
 					</div>
 				</div>
 			</div>
+
+			{/* Submission Modal */}
+			{selectedSubmission && (
+				<SubmissionModal
+					submission={selectedSubmission}
+					onClose={() => setSelectedSubmission(null)}
+					onStatusChange={(email, status) => {
+						handleStatusChange(email, status);
+						setSelectedSubmission(null);
+					}}
+				/>
+			)}
 
 			<style jsx>{`
 				@keyframes float {

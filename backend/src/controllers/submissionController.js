@@ -94,3 +94,92 @@ export const getSubmissions = async (req, res) => {
 		});
 	}
 };
+
+export const changeStatus = async (req, res) => {
+  const { email, status } = req.body;
+  
+  if (!email || !status) {
+    return res.status(400).json({
+      success: false,
+      message: "Email and status are required"
+    });
+  }
+  
+  try {
+    const emailKey = sanitizeEmailKey(email);
+    const snapshot = await db.ref(`otps/${emailKey}`).once("value");
+    const userData = snapshot.val();
+    
+    if (!userData) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+    
+    // Update the status
+    await db.ref(`otps/${emailKey}`).update({ status });
+    
+    res.status(200).json({
+      success: true,
+      message: "Status updated successfully",
+      status
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to update status",
+      error: error.message
+    });
+  }
+};
+
+export const advanceToNextRound = async (req, res) => {
+  try {
+    // Get all submissions
+    const submissionsSnapshot = await db.ref("otps").once("value");
+    const submissionsData = submissionsSnapshot.val();
+    
+    if (!submissionsData) {
+      return res.status(404).json({
+        success: false,
+        message: "No submissions found"
+      });
+    }
+    
+    // Process each submission
+    const updates = {};
+    
+    Object.entries(submissionsData).forEach(([key, userData]) => {
+      // Skip entries without status (like admin users)
+      if (!userData.status) return;
+      
+      // Change selected to pending for next round
+      if (userData.status === "selected") {
+        updates[`otps/${key}/status`] = "pending";
+      }
+      
+      // Change rejected to rejected_final
+      if (userData.status === "rejected") {
+        updates[`otps/${key}/status`] = "rejected_final";
+      }
+    });
+    
+    // Apply all updates in a single operation
+    if (Object.keys(updates).length > 0) {
+      await db.ref().update(updates);
+    }
+    
+    res.status(200).json({
+      success: true,
+      message: "Advanced to next round successfully",
+      updatedCount: Object.keys(updates).length
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to advance to next round",
+      error: error.message
+    });
+  }
+};
